@@ -1,0 +1,22 @@
+{
+  "folders": [
+    {
+      "name": "rootstock-devkit",
+      "path": "."
+    },
+    {
+      "name": "foundry",
+      "path": "foundry"
+    }
+  ],
+  "settings": {
+    "solidity.packageDefaultDependenciesDirectory": "foundry/lib",
+    "solidity.packageDefaultDependenciesContractsDirectory": "foundry/src",
+    "solidity.formatter": "forge",
+    "[solidity]": {
+      "editor.defaultFormatter": "NomicFoundation.hardhat-solidity",
+      "editor.formatOnSave": true
+    }
+  }
+}
+

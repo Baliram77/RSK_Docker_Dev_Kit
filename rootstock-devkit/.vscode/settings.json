@@ -1,0 +1,12 @@
+{
+  // Nomic Foundation Solidity extension: make it understand Foundry-in-subfolder layout
+  "solidity.packageDefaultDependenciesDirectory": "foundry/lib",
+  "solidity.packageDefaultDependenciesContractsDirectory": "foundry/src",
+
+  "[solidity]": {
+    "editor.defaultFormatter": "NomicFoundation.hardhat-solidity",
+    "editor.formatOnSave": true
+  },
+  "solidity.formatter": "forge"
+}
+
