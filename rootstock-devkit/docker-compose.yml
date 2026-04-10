@@ -1,0 +1,73 @@
+services:
+  rskj:
+    image: rsksmart/rskj:VETIVER-9.0.0
+    container_name: rootstock-rskj-regtest
+    command: ["--regtest"]
+    ports:
+      - "${RSK_P2P_PORT:-5050}:5050"
+      - "127.0.0.1:${RSK_RPC_PORT:-4444}:4444"
+    volumes:
+      - rskj_data:/var/lib/rsk/.rsk
+      - ./docker/rskj/config.conf:/etc/rsk/node.conf:ro
+      - ./docker/rskj/genesis.json:/etc/rsk/genesis.json:ro
+    healthcheck:
+      # RSKj exposes an Ethereum-compatible JSON-RPC on :4444
+      test:
+        [
+          "CMD-SHELL",
+          "(command -v curl >/dev/null 2>&1 && curl -fsS -H 'Content-Type: application/json' -d '{\"jsonrpc\":\"2.0\",\"method\":\"web3_clientVersion\",\"params\":[],\"id\":1}' http://127.0.0.1:4444/ >/dev/null) || (command -v wget >/dev/null 2>&1 && wget -qO- --header='Content-Type: application/json' --post-data='{\"jsonrpc\":\"2.0\",\"method\":\"web3_clientVersion\",\"params\":[],\"id\":1}' http://127.0.0.1:4444/ >/dev/null)",
+        ]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+      start_period: 20s
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:17
+    container_name: rootstock-blockscout-postgres
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-blockscout}
+      POSTGRES_USER: ${POSTGRES_USER:-blockscout}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-blockscout}
+    ports:
+      - "127.0.0.1:${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-blockscout} -d ${POSTGRES_DB:-blockscout}"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+      start_period: 10s
+    restart: unless-stopped
+
+  blockscout:
+    image: blockscout/blockscout-rsk:7.0.2
+    container_name: rootstock-blockscout
+    depends_on:
+      rskj:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    env_file:
+      - ./docker/blockscout/blockscout.env
+    environment:
+      # Allow override from .env while keeping env_file readable.
+      DATABASE_URL: "postgresql://${POSTGRES_USER:-blockscout}:${POSTGRES_PASSWORD:-blockscout}@postgres:5432/${POSTGRES_DB:-blockscout}?ssl=false"
+      ETHEREUM_JSONRPC_HTTP_URL: "http://rskj:4444"
+      ECTO_USE_SSL: "false"
+    ports:
+      - "127.0.0.1:${BLOCKSCOUT_PORT:-4000}:4000"
+    command:
+      - /bin/sh
+      - -lc
+      - bin/blockscout eval "Elixir.Explorer.ReleaseTasks.create_and_migrate()" && bin/blockscout start
+    restart: unless-stopped
+
+volumes:
+  rskj_data:
+    name: rootstock_rskj_data
+  postgres_data:
+    name: rootstock_blockscout_postgres_data
+
