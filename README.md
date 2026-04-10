@@ -9,6 +9,14 @@ Rootstock local development is usually slow to set up (node config, funded accou
 - PostgreSQL for Blockscout
 - Foundry workspace with sample contracts + tests + deploy script
 
+### What’s new / different
+
+- Uses **RSKj regtest** (not a simulated EVM network) and includes a full explorer.
+- Explorer uses an **RSK-compatible Blockscout image** (RSK behavior is compile-time in Blockscout).
+- Offers **two docker compose profiles**:
+  - **`lite`**: fast boot (RSKj only)
+  - **`full`**: explorer mode (RSKj + Postgres + Blockscout backend + UI)
+
 ### When to use this repo
 
 - You want a **local Rootstock chain** for fast iteration (no faucets, no waiting for public testnets).
@@ -27,14 +35,21 @@ From repo root:
 
 ```bash
 cd rootstock-devkit
-docker compose up -d
-docker compose ps
+docker compose --profile full up -d
+docker compose --profile full ps
 ```
 
 Open:
 
 - **Blockscout UI**: `http://localhost:4000`
 - **RSK JSON-RPC**: `http://localhost:4444`
+
+### Lite mode (fast boot)
+
+```bash
+cd rootstock-devkit
+docker compose --profile lite up -d
+```
 
 ### Developer commands
 
@@ -110,7 +125,7 @@ cd rootstock-devkit
 ### Common issues + fixes
 
 - **Blockscout UI shows “connection refused”**
-  - Check `docker compose ps` in `rootstock-devkit/`.
+  - Check `docker compose --profile full ps` in `rootstock-devkit/`.
   - The UI is served by the **frontend** container; if it’s not running, restart: `docker compose up -d`.
 
 - **Blockscout UI returns 404**
@@ -121,6 +136,10 @@ cd rootstock-devkit
 
 ### Environment variables (`rootstock-devkit/.env`)
 
+- **Pinned images**
+  - `RSKJ_IMAGE`, `RSKJ_TAG`
+  - `BLOCKSCOUT_RSK_IMAGE`, `BLOCKSCOUT_RSK_TAG`
+  - `BLOCKSCOUT_FRONTEND_IMAGE`, `BLOCKSCOUT_FRONTEND_TAG`
 - **`RSK_RPC_PORT`**: Host port for RSKj JSON-RPC (default `4444`)
 - **`RSK_P2P_PORT`**: Host port for RSKj P2P (default `5050`)
 - **`BLOCKSCOUT_PORT`**: Host port for Blockscout UI (default `4000`)
@@ -135,6 +154,10 @@ cd rootstock-devkit
 - **Docker configs**: `rootstock-devkit/docker/README.md`
 - **Scripts**: `rootstock-devkit/scripts/README.md`
 - **Foundry workspace**: `rootstock-devkit/foundry/README.md`
+
+### Benchmarks
+
+See `rootstock-devkit/BENCHMARKS.md` to measure cold-start time for `lite` and `full`.
 
 ### Rootstock links
 

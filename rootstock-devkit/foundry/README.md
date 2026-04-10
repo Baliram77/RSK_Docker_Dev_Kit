@@ -13,6 +13,7 @@ It includes:
 - **RPC**: `http://localhost:4444`
 - **Chain ID**: `33`
 - **Deployment tx type**: legacy (use `--legacy`)
+- **EVM version**: `london` (set in `foundry.toml`)
 
 ### Project layout
 

@@ -1,7 +1,8 @@
 services:
   rskj:
-    image: rsksmart/rskj:VETIVER-9.0.0
+    image: "${RSKJ_IMAGE:-rsksmart/rskj}:${RSKJ_TAG:-REED-8.1.0}"
     container_name: rootstock-rskj-regtest
+    profiles: ["lite", "full"]
     user: "0:0"
     entrypoint:
       - /bin/sh
@@ -33,6 +34,7 @@ services:
   postgres:
     image: postgres:17
     container_name: rootstock-blockscout-postgres
+    profiles: ["full"]
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-blockscout}
       POSTGRES_USER: ${POSTGRES_USER:-blockscout}
@@ -50,8 +52,9 @@ services:
     restart: unless-stopped
 
   blockscout-backend:
-    image: blockscout/blockscout-rsk:7.0.2
+    image: "${BLOCKSCOUT_RSK_IMAGE:-ghcr.io/blockscout/blockscout-rsk}:${BLOCKSCOUT_RSK_TAG:-9.0.2}"
     container_name: rootstock-blockscout-backend
+    profiles: ["full"]
     depends_on:
       rskj:
         condition: service_healthy
@@ -70,11 +73,22 @@ services:
       - /bin/sh
       - -lc
       - bin/blockscout eval "Elixir.Explorer.ReleaseTasks.create_and_migrate()" && bin/blockscout start
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "(command -v curl >/dev/null 2>&1 && curl -fsS http://127.0.0.1:4000/api/v2/blocks >/dev/null) || (command -v wget >/dev/null 2>&1 && wget -qO- http://127.0.0.1:4000/api/v2/blocks >/dev/null)",
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 60
+      start_period: 60s
     restart: unless-stopped
 
   blockscout-frontend:
-    image: ghcr.io/blockscout/frontend:latest
+    image: "${BLOCKSCOUT_FRONTEND_IMAGE:-ghcr.io/blockscout/frontend}:${BLOCKSCOUT_FRONTEND_TAG:-latest}"
     container_name: rootstock-blockscout-frontend
+    profiles: ["full"]
     depends_on:
       blockscout-backend:
         condition: service_started

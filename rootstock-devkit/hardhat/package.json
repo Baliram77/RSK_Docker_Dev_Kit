@@ -1,0 +1,17 @@
+{
+  "name": "rootstock-devkit-hardhat",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Hardhat workspace for Rootstock regtest (chainId 33) using legacy transactions.",
+  "license": "MIT",
+  "scripts": {
+    "compile": "hardhat compile",
+    "deploy:rsk": "hardhat run scripts/deploy.js --network rskRegtest"
+  },
+  "devDependencies": {
+    "@nomicfoundation/hardhat-ethers": "^3.0.9",
+    "ethers": "^6.15.0",
+    "hardhat": "^2.23.0"
+  }
+}
+

@@ -6,7 +6,11 @@ on:
 
 jobs:
   devkit:
-    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
 
     steps:
       - name: Checkout
@@ -17,11 +21,15 @@ jobs:
         with:
           version: nightly
 
-      - name: Start devkit (docker compose)
+      # NOTE: GitHub-hosted macOS runners don't provide a Docker daemon, so we can’t
+      # run docker compose there. We still validate Foundry on macOS.
+      - name: Start devkit (docker compose, full profile)
+        if: runner.os == 'Linux'
         working-directory: rootstock-devkit
-        run: docker compose up -d
+        run: docker compose --profile full up -d
 
       - name: Wait for RSKj RPC
+        if: runner.os == 'Linux'
         run: |
           for i in $(seq 1 60); do
             if curl -fsS -H 'Content-Type: application/json' \
@@ -37,6 +45,11 @@ jobs:
           docker logs --tail=200 rootstock-rskj-regtest || true
           exit 1
 
+      - name: Blockscout API check (200)
+        if: runner.os == 'Linux'
+        run: |
+          curl -fsS -o /dev/null http://127.0.0.1:4001/api/v2/blocks
+
       - name: Forge build + test
         working-directory: rootstock-devkit/foundry
         run: |
@@ -46,5 +59,9 @@ jobs:
       - name: Shutdown
         if: always()
         working-directory: rootstock-devkit
-        run: docker compose down -v --remove-orphans
+        run: |
+          if [ "${{ runner.os }}" = "Linux" ]; then
+            docker compose --profile full down -v --remove-orphans
+          fi
+        shell: bash
 

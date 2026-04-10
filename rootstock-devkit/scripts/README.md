@@ -9,9 +9,9 @@ These are convenience scripts for day-to-day local development.
 
 ### Start / stop / reset
 
-- `./scripts/start.sh`: start the full stack (`docker compose up -d`)
-- `./scripts/stop.sh`: stop containers (`docker compose down`)
-- `./scripts/reset.sh`: wipe volumes and restart (fresh chain + fresh DB)
+- `./scripts/start.sh [lite|full]`: start a profile (default: `full`)
+- `./scripts/stop.sh [lite|full]`: stop a profile (default: `full`)
+- `./scripts/reset.sh [lite|full]`: wipe volumes and restart a profile (default: `full`)
 
 ### Deploy
 
@@ -50,5 +50,14 @@ If you see “permission denied”, run:
 
 ```bash
 chmod +x scripts/*.sh
+```
+
+### Benchmarks
+
+Measure cold-start time (fresh volumes) for `lite` / `full`:
+
+```bash
+./scripts/bench.sh lite
+./scripts/bench.sh full
 ```
 

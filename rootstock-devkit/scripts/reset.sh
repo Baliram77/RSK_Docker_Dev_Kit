@@ -4,7 +4,9 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT_DIR"
 
-docker compose down -v --remove-orphans
-docker compose up -d
-docker compose ps
+PROFILE="${1:-full}"
+
+docker compose --profile "$PROFILE" down -v --remove-orphans
+docker compose --profile "$PROFILE" up -d
+docker compose --profile "$PROFILE" ps
 

@@ -6,8 +6,8 @@ libs = ["lib"]
 # Rootstock regtest settings
 chain_id = 33
 
-# Rootstock is EVM-compatible; Istanbul is a safe baseline for broad compatibility
-evm_version = "istanbul"
+# Rootstock requirement: align tooling to London ruleset
+evm_version = "london"
 
 # Deterministic build settings
 solc_version = "0.8.28"

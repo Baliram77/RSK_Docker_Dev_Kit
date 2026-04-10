@@ -9,6 +9,17 @@ Rootstock local development is usually slow to set up (node config, funded accou
 - PostgreSQL for Blockscout
 - Foundry workspace with sample contracts + tests + deploy script
 
+### What’s new / different (why this exists)
+
+This repo is intentionally **RSKj-based** (real Rootstock node) and ships an explorer that uses an **RSK-compatible Blockscout build** (RSK behavior is compile-time in Blockscout).
+
+It also provides **two compose profiles** so you can choose between **fast boot** and **full explorer** without editing files.
+
+### Maintenance commitment (project expectations)
+
+- Versions are **pinned** in `rootstock-devkit/.env` and should be bumped intentionally.
+- CI is expected to keep the “boot stack + run forge tests” path working on every change.
+
 ### When to use this repo
 
 - You want a **local Rootstock chain** for fast iteration (no faucets, no waiting for public testnets).
@@ -26,14 +37,29 @@ Rootstock local development is usually slow to set up (node config, funded accou
 From `rootstock-devkit/`:
 
 ```bash
-docker compose up -d
-docker compose ps
+# Full stack (RSKj + Postgres + Blockscout)
+docker compose --profile full up -d
+docker compose --profile full ps
 ```
 
 Open:
 
 - **Blockscout UI**: `http://localhost:4000`
 - **RSK JSON-RPC**: `http://localhost:4444`
+
+### Compose profiles (lite vs full)
+
+- **Lite** (fast boot): RSKj only
+
+```bash
+docker compose --profile lite up -d
+```
+
+- **Full** (explorer): RSKj + Postgres + Blockscout (backend + UI)
+
+```bash
+docker compose --profile full up -d
+```
 
 ### Developer commands
 
@@ -74,7 +100,7 @@ ports      │   │ RSKj regtest  │     │ Blockscout backend (API)   │   
            │                                                         │
            │   ┌──────────────────────────────────────────────────┐  │
 4000 ─────▶│   │ Blockscout frontend (UI)                          │  │
-           │   │ ghcr.io/blockscout/frontend                        │  │
+           │   │ ghcr.io/blockscout/frontend                         │  │
            │   │ talks to backend at http://localhost:4001/api      │  │
            │   └──────────────────────────────────────────────────┘  │
            └─────────────────────────────────────────────────────────┘
@@ -107,7 +133,7 @@ cd rootstock-devkit
 ### Common issues + fixes
 
 - **Blockscout UI shows “connection refused”**
-  - Run `make up`, then check `docker compose ps` in `rootstock-devkit/`.
+  - Run `docker compose --profile full up -d`, then check `docker compose --profile full ps` in `rootstock-devkit/`.
   - The UI is served by the **frontend** container; if it’s not running, restart: `docker compose up -d`.
 
 - **Blockscout UI returns 404**
@@ -118,6 +144,13 @@ cd rootstock-devkit
 
 ### Environment variables (`rootstock-devkit/.env`)
 
+- **About `.env`**
+  - We keep `rootstock-devkit/.env` committed because it contains **no real secrets** (it’s just ports + pinned image tags + local DB defaults).
+  - If you prefer the conventional pattern, copy `rootstock-devkit/.env.example` to `rootstock-devkit/.env` and edit your local values.
+- **Pinned images**
+  - `RSKJ_IMAGE`, `RSKJ_TAG`
+  - `BLOCKSCOUT_RSK_IMAGE`, `BLOCKSCOUT_RSK_TAG`
+  - `BLOCKSCOUT_FRONTEND_IMAGE`, `BLOCKSCOUT_FRONTEND_TAG`
 - **`RSK_RPC_PORT`**: Host port for RSKj JSON-RPC (default `4444`)
 - **`RSK_P2P_PORT`**: Host port for RSKj P2P (default `5050`)
 - **`BLOCKSCOUT_PORT`**: Host port for Blockscout UI (default `4000`)
@@ -132,4 +165,31 @@ cd rootstock-devkit
 - **Docker configs**: `docker/README.md`
 - **Scripts**: `scripts/README.md`
 - **Foundry workspace**: `foundry/README.md`
+
+### Benchmarks
+
+See `BENCHMARKS.md` for cold-start measurements (lite vs full).
+
+### End-to-end validation (RSKj + Blockscout)
+
+Run these checks after `--profile full up -d`:
+
+```bash
+# 1) chain id (33 => 0x21)
+curl -s -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","method":"eth_chainId","params":[],"id":1}' \
+  http://localhost:4444/
+
+# 2) Blockscout UI
+curl -s -o /dev/null -w "%{http_code}\n" http://localhost:4000/
+
+# 3) Blockscout API (latest blocks endpoint)
+curl -s -o /dev/null -w "%{http_code}\n" http://localhost:4001/api/v2/blocks
+```
+
+Expected:
+
+- `eth_chainId` returns `0x21`
+- UI returns HTTP `200`
+- API returns HTTP `200`
 

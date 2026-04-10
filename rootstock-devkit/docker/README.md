@@ -28,8 +28,8 @@ This folder contains the configuration files mounted into containers by `docker-
 - If you change `rskj/genesis.json`, you must **wipe volumes** for it to take effect:
 
 ```bash
-docker compose down -v --remove-orphans
-docker compose up -d
+docker compose --profile full down -v --remove-orphans
+docker compose --profile full up -d
 ```
 
 ### Quick debugging
@@ -37,7 +37,7 @@ docker compose up -d
 - Check container status:
 
 ```bash
-docker compose ps
+docker compose --profile full ps
 ```
 
 - View RSKj logs:
@@ -51,5 +51,20 @@ docker logs -n 200 rootstock-rskj-regtest
 ```bash
 docker logs -n 200 rootstock-blockscout-backend
 ```
+
+### Compose profiles
+
+- `lite`: RSKj only
+- `full`: RSKj + Postgres + Blockscout backend + Blockscout UI
+
+### Why `full` can take longer to boot
+
+`full` includes Blockscout + Postgres. On a cold start it has to:
+
+- initialize Postgres storage
+- run Blockscout DB migrations
+- start the API + indexer services
+
+This is expected to take longer than `lite`.
 
 
