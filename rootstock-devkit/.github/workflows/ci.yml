@@ -1,0 +1,50 @@
+name: ci
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  devkit:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: nightly
+
+      - name: Start devkit (docker compose)
+        working-directory: rootstock-devkit
+        run: docker compose up -d
+
+      - name: Wait for RSKj RPC
+        run: |
+          for i in $(seq 1 60); do
+            if curl -fsS -H 'Content-Type: application/json' \
+              -d '{"jsonrpc":"2.0","method":"web3_clientVersion","params":[],"id":1}' \
+              http://127.0.0.1:4444/ >/dev/null; then
+              echo "RSKj is healthy"
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "RSKj did not become healthy in time"
+          docker compose -f rootstock-devkit/docker-compose.yml ps
+          docker logs --tail=200 rootstock-rskj-regtest || true
+          exit 1
+
+      - name: Forge build + test
+        working-directory: rootstock-devkit/foundry
+        run: |
+          forge build
+          forge test
+
+      - name: Shutdown
+        if: always()
+        working-directory: rootstock-devkit
+        run: docker compose down -v --remove-orphans
+

@@ -1,37 +1,88 @@
 ## Rootstock Docker-Compose Dev Kit
 
-Local Rootstock (RSK) dev environment with one command: RSKj **regtest** + Blockscout + PostgreSQL.
+One-command **local Rootstock (RSK) regtest** developer stack:
 
-### What runs
+- Rootstock node (**RSKj regtest**) with deterministic, pre-funded accounts
+- Blockscout **UI** + Blockscout **API** (backend)
+- PostgreSQL for Blockscout
+- Foundry workspace with sample contracts + tests + deploy script
 
-- **RSKj** (`rsksmart/rskj:VETIVER-9.0.0`)
-  - **Regtest** mode
-  - JSON-RPC on `http://localhost:${RSK_RPC_PORT}` (default `4444`)
-  - Pre-funded dev accounts (see `docker/rskj/genesis.json`)
-- **PostgreSQL** (`postgres:17`) for Blockscout
-- **Blockscout (RSK)** (`blockscout/blockscout-rsk:7.0.2`)
-  - Explorer UI on `http://localhost:${BLOCKSCOUT_PORT}` (default `4000`)
+### Architecture (text diagram)
 
-### Quickstart
+```text
+           ┌─────────────────────────────────────────────────────────┐
+           │                      Docker network                      │
+           │                                                         │
+Host       │   ┌──────────────┐     ┌────────────────────────────┐   │
+ports      │   │ RSKj regtest  │     │ Blockscout backend (API)   │   │
+           │   │ rsksmart/rskj │◀────│ blockscout/blockscout-rsk  │   │
+4444 ─────▶│   │ RPC :4444     │     │ listens :4000 internally   │   │
+5050 ─────▶│   └──────────────┘     └───────────────▲────────────┘   │
+           │                                         │                │
+           │                              ┌──────────┴───────────┐    │
+5432 ─────▶│                              │ Postgres             │    │
+           │                              │ postgres:17          │    │
+           │                              └──────────────────────┘    │
+           │                                                         │
+           │   ┌──────────────────────────────────────────────────┐  │
+4000 ─────▶│   │ Blockscout frontend (UI)                          │  │
+           │   │ ghcr.io/blockscout/frontend                        │  │
+           │   │ talks to backend at http://localhost:4001/api      │  │
+           │   └──────────────────────────────────────────────────┘  │
+           └─────────────────────────────────────────────────────────┘
+```
 
-1) Copy env (optional) and start:
+### Services and endpoints
+
+- **RSKj JSON-RPC**: `http://localhost:4444`
+- **Blockscout UI**: `http://localhost:4000`
+- **Blockscout API**: `http://localhost:4001/api`
+
+### Quickstart (1 command)
 
 ```bash
 cd rootstock-devkit
-docker compose up -d
+make up
 ```
 
-2) Open Blockscout:
+### Deploy sample contracts (Foundry)
 
-- `http://localhost:4000`
+```bash
+cd rootstock-devkit
+make deploy
+```
 
-3) RPC endpoint:
+This uses `foundry/.env` (`PRIVATE_KEY=...`) and broadcasts **legacy** transactions to `http://localhost:4444`.
 
-- `http://localhost:4444`
+### Fund a new account (RBTC)
 
-### How services connect
+Send RBTC from your configured `foundry/.env` key:
 
-- **Blockscout → RSKj**: `ETHEREUM_JSONRPC_HTTP_URL=http://rskj:4444` (Docker network DNS)
-- **Blockscout → Postgres**: `DATABASE_URL=postgresql://...@postgres:5432/...`
-- **Startup ordering**: Blockscout waits for **RSKj healthcheck** (JSON-RPC responds) and **Postgres healthcheck**.
+```bash
+cd rootstock-devkit
+./scripts/fund.sh 0xYourAddressHere 100000000000000000
+```
+
+### Common issues + fixes
+
+- **Blockscout UI shows “connection refused”**
+  - Run `make up`, then check `docker compose ps` in `rootstock-devkit/`.
+  - The UI is served by the **frontend** container; if it’s not running, restart: `docker compose up -d`.
+
+- **Blockscout UI returns 404**
+  - That usually means you’re hitting the backend API container directly. Make sure you’re using `http://localhost:4000` (UI), not `4001` (API).
+
+- **Foundry “nonce too low” on deploy**
+  - Re-run using a different pre-funded key from the genesis list, or reset chain state with `make reset`.
+
+### Environment variables (`rootstock-devkit/.env`)
+
+- **`RSK_RPC_PORT`**: Host port for RSKj JSON-RPC (default `4444`)
+- **`RSK_P2P_PORT`**: Host port for RSKj P2P (default `5050`)
+- **`BLOCKSCOUT_PORT`**: Host port for Blockscout UI (default `4000`)
+- **`BLOCKSCOUT_API_PORT`**: Host port for Blockscout backend API (default `4001`)
+- **`POSTGRES_PORT`**: Host port for Postgres (default `5432`)
+- **`POSTGRES_DB` / `POSTGRES_USER` / `POSTGRES_PASSWORD`**: Postgres credentials for Blockscout
+- **`RSK_MINING_INTERVAL_MS`**: Reserved for local tuning; current setup uses **automine** (mine-on-tx)
+- **`BLOCKSCOUT_LOG_LEVEL`**: Backend log verbosity
 
