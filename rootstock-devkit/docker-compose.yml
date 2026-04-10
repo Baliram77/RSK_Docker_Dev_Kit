@@ -2,7 +2,14 @@ services:
   rskj:
     image: rsksmart/rskj:VETIVER-9.0.0
     container_name: rootstock-rskj-regtest
-    command: ["--regtest"]
+    user: "0:0"
+    entrypoint:
+      - /bin/sh
+      - -lc
+    command:
+      - >
+        mkdir -p /var/lib/rsk/.rsk/regtest/database
+        && exec java $$DEFAULT_JVM_OPTS $$RSKJ_SYS_PROPS $$RSKJ_LOG_PROPS -cp rsk.jar $$RSKJ_CLASS $$RSKJ_OPTS --regtest
     ports:
       - "${RSK_P2P_PORT:-5050}:5050"
       - "127.0.0.1:${RSK_RPC_PORT:-4444}:4444"
