@@ -1,11 +1,59 @@
 ## Rootstock Docker-Compose Dev Kit
 
-One-command **local Rootstock (RSK) regtest** developer stack:
+One-command **local Rootstock (RSK) regtest** developer stack.
+
+Rootstock local development is usually slow to set up (node config, funded accounts, explorer, tooling). This devkit makes it predictable: you start a full local stack in minutes and immediately deploy contracts with Foundry.
 
 - Rootstock node (**RSKj regtest**) with deterministic, pre-funded accounts
 - Blockscout **UI** + Blockscout **API** (backend)
 - PostgreSQL for Blockscout
 - Foundry workspace with sample contracts + tests + deploy script
+
+### When to use this repo
+
+- You want a **local Rootstock chain** for fast iteration (no faucets, no waiting for public testnets).
+- You need a local explorer (**Blockscout UI**) to inspect blocks/txs/contracts.
+- You want to run CI to ensure the whole stack still boots and contracts still compile/test.
+
+### Prerequisites
+
+- **Docker Desktop** (with `docker compose` available)
+- **Foundry** (for deploy/tests in `foundry/`)
+  - Install guide: `https://book.getfoundry.sh/getting-started/installation`
+
+### Quickstart (Windows/macOS/Linux)
+
+From `rootstock-devkit/`:
+
+```bash
+docker compose up -d
+docker compose ps
+```
+
+Open:
+
+- **Blockscout UI**: `http://localhost:4000`
+- **RSK JSON-RPC**: `http://localhost:4444`
+
+### Developer commands
+
+If you have `make` installed:
+
+```bash
+make up
+make test
+make deploy
+make reset
+```
+
+If you **don’t** have `make` (common on Windows), use scripts:
+
+```bash
+./scripts/start.sh
+./scripts/reset.sh
+./scripts/deploy.sh
+./scripts/fund.sh 0xYourAddressHere 100000000000000000
+```
 
 ### Architecture (text diagram)
 
@@ -38,18 +86,11 @@ ports      │   │ RSKj regtest  │     │ Blockscout backend (API)   │   
 - **Blockscout UI**: `http://localhost:4000`
 - **Blockscout API**: `http://localhost:4001/api`
 
-### Quickstart (1 command)
-
-```bash
-cd rootstock-devkit
-make up
-```
-
 ### Deploy sample contracts (Foundry)
 
 ```bash
 cd rootstock-devkit
-make deploy
+./scripts/deploy.sh
 ```
 
 This uses `foundry/.env` (`PRIVATE_KEY=...`) and broadcasts **legacy** transactions to `http://localhost:4444`.
@@ -73,7 +114,7 @@ cd rootstock-devkit
   - That usually means you’re hitting the backend API container directly. Make sure you’re using `http://localhost:4000` (UI), not `4001` (API).
 
 - **Foundry “nonce too low” on deploy**
-  - Re-run using a different pre-funded key from the genesis list, or reset chain state with `make reset`.
+  - Reset the chain with `./scripts/reset.sh`, or use a different pre-funded dev key in `foundry/.env`.
 
 ### Environment variables (`rootstock-devkit/.env`)
 
@@ -85,4 +126,10 @@ cd rootstock-devkit
 - **`POSTGRES_DB` / `POSTGRES_USER` / `POSTGRES_PASSWORD`**: Postgres credentials for Blockscout
 - **`RSK_MINING_INTERVAL_MS`**: Reserved for local tuning; current setup uses **automine** (mine-on-tx)
 - **`BLOCKSCOUT_LOG_LEVEL`**: Backend log verbosity
+
+### Folder READMEs
+
+- **Docker configs**: `docker/README.md`
+- **Scripts**: `scripts/README.md`
+- **Foundry workspace**: `foundry/README.md`
 
