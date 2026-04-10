@@ -13,6 +13,24 @@ These are convenience scripts for day-to-day local development.
 - `./scripts/stop.sh [lite|full]`: stop a profile (default: `full`)
 - `./scripts/reset.sh [lite|full]`: wipe volumes and restart a profile (default: `full`)
 
+### Switching between `lite` and `full`
+
+Docker Compose profiles share the same project/network. If you’re running `full`, then bringing down `lite` may show “network is still in use” (because `full` still uses it).
+
+- **Switch full → lite**:
+
+```bash
+docker compose --profile full down -v --remove-orphans
+./scripts/start.sh lite
+```
+
+- **Switch lite → full**:
+
+```bash
+docker compose --profile lite down -v --remove-orphans
+./scripts/start.sh full
+```
+
 ### Deploy
 
 - `./scripts/deploy.sh`: deploy the Foundry sample contracts

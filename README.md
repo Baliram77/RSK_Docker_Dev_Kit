@@ -29,6 +29,17 @@ Rootstock local development is usually slow to set up (node config, funded accou
 - **Foundry** (for deploy/tests in `foundry/`)
   - Install guide: `https://book.getfoundry.sh/getting-started/installation`
 
+### Apple Silicon (M1/M2/M3) / ARM notes
+
+- **RSKj image is `linux/amd64`**. On Apple Silicon, Docker Desktop will run it via emulation.
+- **Expected impact**: slower cold-start and higher CPU usage vs a native amd64 machine.
+- **If you hit image/platform errors**, run compose with:
+
+```bash
+cd rootstock-devkit
+DOCKER_DEFAULT_PLATFORM=linux/amd64 docker compose --profile full up -d --pull always
+```
+
 ### Quickstart (Windows/macOS/Linux)
 
 From repo root:
@@ -85,6 +96,12 @@ ports      │   │ RSKj regtest  │     │ Blockscout backend (API)   │   
 4444 ─────▶│   │ RPC :4444     │     │ listens :4000 internally   │   │
 5050 ─────▶│   └──────────────┘     └───────────────▲────────────┘   │
            │                                         │                │
+           │                 ┌───────────────────────┘                │
+           │                 │                                        │
+           │        ┌────────▼────────┐                               │
+           │        │ RPC proxy (nginx)│                               │
+           │        │ forces Host hdr  │                               │
+           │        └──────────────────┘                               │
            │                              ┌──────────┴───────────┐    │
 5432 ─────▶│                              │ Postgres             │    │
            │                              │ postgres:17          │    │
@@ -148,6 +165,12 @@ cd rootstock-devkit
 - **`POSTGRES_DB` / `POSTGRES_USER` / `POSTGRES_PASSWORD`**: Postgres credentials for Blockscout
 - **`RSK_MINING_INTERVAL_MS`**: Reserved for local tuning; current setup uses **automine** (mine-on-tx)
 - **`BLOCKSCOUT_LOG_LEVEL`**: Backend log verbosity
+
+### Bumping pinned versions (quick guide)
+
+- **RSKj**: edit `RSKJ_TAG` in `rootstock-devkit/.env`, then re-pull/restart:
+  - `docker compose --profile full pull && docker compose --profile full up -d`
+- **Blockscout (RSK)**: edit `BLOCKSCOUT_RSK_TAG` similarly.
 
 ### Folder READMEs
 

@@ -51,6 +51,17 @@ services:
       start_period: 10s
     restart: unless-stopped
 
+  rskj-rpc-proxy:
+    image: nginx:1.27-alpine
+    container_name: rootstock-rskj-rpc-proxy
+    profiles: ["full"]
+    depends_on:
+      rskj:
+        condition: service_healthy
+    volumes:
+      - ./docker/rskj/rpc-proxy.nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    restart: unless-stopped
+
   blockscout-backend:
     image: "${BLOCKSCOUT_RSK_IMAGE:-ghcr.io/blockscout/blockscout-rsk}:${BLOCKSCOUT_RSK_TAG:-9.0.2}"
     container_name: rootstock-blockscout-backend
@@ -60,12 +71,14 @@ services:
         condition: service_healthy
       postgres:
         condition: service_healthy
+      rskj-rpc-proxy:
+        condition: service_started
     env_file:
       - ./docker/blockscout/blockscout.env
     environment:
       # Allow override from .env while keeping env_file readable.
       DATABASE_URL: "postgresql://${POSTGRES_USER:-blockscout}:${POSTGRES_PASSWORD:-blockscout}@postgres:5432/${POSTGRES_DB:-blockscout}?ssl=false"
-      ETHEREUM_JSONRPC_HTTP_URL: "http://rskj:4444"
+      ETHEREUM_JSONRPC_HTTP_URL: "http://rskj-rpc-proxy:8080"
       ECTO_USE_SSL: "false"
     ports:
       - "127.0.0.1:${BLOCKSCOUT_API_PORT:-4001}:4000"

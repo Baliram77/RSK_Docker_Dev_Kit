@@ -32,6 +32,12 @@ It also provides **two compose profiles** so you can choose between **fast boot*
 - **Foundry** (for deploy/tests in `foundry/`)
   - Install guide: `https://book.getfoundry.sh/getting-started/installation`
 
+### Apple Silicon (M1/M2/M3) / ARM notes
+
+- **RSKj image is `linux/amd64`**. On Apple Silicon, Docker Desktop will run it via emulation.
+- **Expected impact**: slower startup and higher CPU usage vs a native amd64 machine.
+- If you hit platform errors: `DOCKER_DEFAULT_PLATFORM=linux/amd64 docker compose --profile full up -d`
+
 ### Quickstart (Windows/macOS/Linux)
 
 From `rootstock-devkit/`:
@@ -93,6 +99,12 @@ ports      │   │ RSKj regtest  │     │ Blockscout backend (API)   │   
 4444 ─────▶│   │ RPC :4444     │     │ listens :4000 internally   │   │
 5050 ─────▶│   └──────────────┘     └───────────────▲────────────┘   │
            │                                         │                │
+           │                 ┌───────────────────────┘                │
+           │                 │                                        │
+           │        ┌────────▼────────┐                               │
+           │        │ RPC proxy (nginx)│                               │
+           │        │ forces Host hdr  │                               │
+           │        └──────────────────┘                               │
            │                              ┌──────────┴───────────┐    │
 5432 ─────▶│                              │ Postgres             │    │
            │                              │ postgres:17          │    │
@@ -138,6 +150,10 @@ cd rootstock-devkit
 
 - **Blockscout UI returns 404**
   - That usually means you’re hitting the backend API container directly. Make sure you’re using `http://localhost:4000` (UI), not `4001` (API).
+
+- **Blockscout API returns 200 but shows no blocks**
+  - This stack includes `rootstock-rskj-rpc-proxy` (nginx) to make RSKj’s RPC compatible with Blockscout’s default Host header behavior inside Docker.
+  - Reset and restart full: `docker compose --profile full down -v --remove-orphans && docker compose --profile full up -d`
 
 - **Foundry “nonce too low” on deploy**
   - Reset the chain with `./scripts/reset.sh`, or use a different pre-funded dev key in `foundry/.env`.
