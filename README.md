@@ -136,3 +136,11 @@ cd rootstock-devkit
 - **Scripts**: `rootstock-devkit/scripts/README.md`
 - **Foundry workspace**: `rootstock-devkit/foundry/README.md`
 
+### Rootstock links
+
+- **Developer portal**: `https://dev.rootstock.io/`
+- **Discord**: `https://discord.gg/rootstock`
+- **Telegram** (announcements): `https://t.me/RSKsmartcontracts`
+- **X (Twitter)**: `https://x.com/rootstock_io`
+- **Testnet Blockscout**: `https://rootstock-testnet.blockscout.com/`
+
