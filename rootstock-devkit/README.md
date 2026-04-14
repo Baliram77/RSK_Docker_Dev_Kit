@@ -158,6 +158,13 @@ cd rootstock-devkit
 - **Foundry “nonce too low” on deploy**
   - Reset the chain with `./scripts/reset.sh`, or use a different pre-funded dev key in `foundry/.env`.
 
+- **`make wipe` refuses to run**
+  - It is destructive (deletes Docker volumes). Use `make wipe CONFIRM=yes` after reading `make help`.
+
+### Hardhat (`hardhat/`)
+
+Use the lockfile — install with `cd hardhat && npm ci` (do not commit `node_modules`).
+
 ### Environment variables (`rootstock-devkit/.env`)
 
 - **About `.env`**

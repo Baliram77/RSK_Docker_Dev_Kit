@@ -130,6 +130,16 @@ cd rootstock-devkit
 
 This uses `foundry/.env` (`PRIVATE_KEY=...`) and broadcasts **legacy** transactions to `http://localhost:4444`.
 
+### Hardhat (optional)
+
+Dependencies live under `rootstock-devkit/hardhat/` with a lockfile — do not commit `node_modules`:
+
+```bash
+cd rootstock-devkit/hardhat
+npm ci
+npm run compile
+```
+
 ### Fund a new account (RBTC)
 
 Send RBTC from your configured `foundry/.env` key:
@@ -170,7 +180,8 @@ cd rootstock-devkit
 
 - **RSKj**: edit `RSKJ_TAG` in `rootstock-devkit/.env`, then re-pull/restart:
   - `docker compose --profile full pull && docker compose --profile full up -d`
-- **Blockscout (RSK)**: edit `BLOCKSCOUT_RSK_TAG` similarly.
+- **Blockscout (RSK backend)**: edit `BLOCKSCOUT_RSK_TAG` similarly.
+- **Blockscout UI (frontend image)**: edit `BLOCKSCOUT_FRONTEND_TAG` (pinned semver tag, not `latest`).
 
 ### Folder READMEs
 

@@ -9,6 +9,10 @@ chain_id = 33
 # Rootstock requirement: align tooling to London ruleset
 evm_version = "london"
 
+# RSKj regtest uses legacy-style gas pricing (not EIP-1559). This nudges tooling toward
+# legacy sends; you must still pass `--legacy` to `forge script` / `cast send` when broadcasting.
+gas_price = 0
+
 # Deterministic build settings
 solc_version = "0.8.28"
 optimizer = true

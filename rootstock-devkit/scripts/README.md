@@ -58,7 +58,9 @@ Example:
 
 ### Derive deterministic dev accounts
 
-- `./scripts/derive-accounts.mjs`
+Hardhat workspace owns npm deps (lockfile under `hardhat/`). From `hardhat/`:
+
+- `npm run derive-accounts` (runs `scripts/derive-accounts.mjs`)
   - prints the first 10 accounts derived from the standard test mnemonic
   - useful for verifying the genesis-funded addresses/private keys
 

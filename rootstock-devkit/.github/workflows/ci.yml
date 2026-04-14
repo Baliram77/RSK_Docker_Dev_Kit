@@ -13,11 +13,12 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     steps:
+      # Pin to commit SHAs (supply-chain hygiene). Tag annotations: v4.2.2, v1
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
 
       - name: Install Foundry
-        uses: foundry-rs/foundry-toolchain@v1
+        uses: foundry-rs/foundry-toolchain@8789b3e21e6c11b2697f5eb56eddae542f746c10
         with:
           version: nightly
 
@@ -45,10 +46,20 @@ jobs:
           docker logs --tail=200 rootstock-rskj-regtest || true
           exit 1
 
-      - name: Blockscout API check (200)
+      - name: Blockscout API check (200, with retries)
         if: runner.os == 'Linux'
         run: |
-          curl -fsS -o /dev/null http://127.0.0.1:4001/api/v2/blocks
+          for i in $(seq 1 60); do
+            if curl -fsS -o /dev/null http://127.0.0.1:4001/api/v2/blocks; then
+              echo "Blockscout API ready"
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "Blockscout API did not return 200 in time"
+          docker compose -f rootstock-devkit/docker-compose.yml --profile full ps || true
+          docker logs --tail=200 rootstock-blockscout-backend || true
+          exit 1
 
       - name: Forge build + test
         working-directory: rootstock-devkit/foundry
@@ -64,4 +75,3 @@ jobs:
             docker compose --profile full down -v --remove-orphans
           fi
         shell: bash
-

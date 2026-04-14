@@ -1,0 +1,21 @@
+# Dependencies (never commit — use lockfiles + npm ci)
+node_modules/
+
+# Hardhat / npm (workspace)
+hardhat/node_modules/
+
+# Logs & OS noise
+*.log
+.DS_Store
+Thumbs.db
+
+# Env files with secrets (examples stay tracked)
+.env
+.env.local
+!.env.example
+
+# Foundry
+foundry/out/
+foundry/cache/
+foundry/broadcast/
+foundry/lib/openzeppelin-contracts/

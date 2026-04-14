@@ -12,8 +12,9 @@ It includes:
 
 - **RPC**: `http://localhost:4444`
 - **Chain ID**: `33`
-- **Deployment tx type**: legacy (use `--legacy`)
+- **Deployment tx type**: legacy (use `--legacy` on `forge script` / `cast send` — RSKj does not use EIP-1559-style txs here)
 - **EVM version**: `london` (set in `foundry.toml`)
+- **`foundry.toml`**: `gas_price = 0` aligns defaults with regtest; broadcasting still requires `--legacy` as above
 
 ### Project layout
 

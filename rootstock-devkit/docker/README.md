@@ -57,6 +57,10 @@ docker logs -n 200 rootstock-blockscout-backend
 - `lite`: RSKj only
 - `full`: RSKj + Postgres + Blockscout backend + Blockscout UI
 
+### RPC security (local regtest)
+
+`docker/rskj/config.conf` sets **CORS to `localhost`** (not `*`) and an **RPC module allowlist** (disables `personal`, `debug`, `trace` by default). The `full` profile still uses `rootstock-rskj-rpc-proxy` so Blockscout can talk to RSKj with a compatible `Host` header.
+
 ### Why `full` can take longer to boot
 
 `full` includes Blockscout + Postgres. On a cold start it has to:
